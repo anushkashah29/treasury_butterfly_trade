@@ -81,10 +81,10 @@ def get_repo_rate(start, end):
 
 # -- backtest state machine ----------------------------------------------------
 
-def run_backtest(df):
+def run_backtest(df, entry_z=ENTRY_Z_LONG, exit_z=EXIT_Z_LONG, min_hold=MIN_HOLD):
     """
     Long belly only -- one trade at a time, no concurrent positions.
-    Enter Z >= +2.0, exit Z <= 0.0 (after 30-day min hold).
+    Enter Z >= entry_z, exit Z <= exit_z (after min_hold days).
     Uses pre-computed z_score_252 from treasury_rates.csv (full 1976-present history).
     """
     df = df.copy()
@@ -108,11 +108,11 @@ def run_backtest(df):
             continue
 
         if not in_trade:
-            if z >= ENTRY_Z_LONG:
+            if z >= entry_z:
                 in_trade = True; entry_idx = i; hold_days = 0
         else:
             hold_days += 1
-            if hold_days >= MIN_HOLD and z <= EXIT_Z_LONG:
+            if hold_days >= min_hold and z <= exit_z:
                 e = df.iloc[entry_idx]
                 x = df.iloc[i]
                 raw_trades.append({
