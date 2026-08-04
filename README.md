@@ -14,12 +14,16 @@ The Z-score is computed on a **252-day rolling window** (one trading year) using
 |---|---|
 | `fred_treasury_rates.py` | Downloads DGS2, DGS5, DGS10 from FRED; computes 252d Z-score; outputs `treasury_rates.csv` and `butterfly_spread.png` |
 | `butterfly.py` | Backtest engine (long belly only); outputs `butterfly_trades_long.csv` and `butterfly_trades.png` |
+| `param_sweep.py` | Sweeps entry/exit Z-score thresholds; outputs `param_sweep_results.csv`, `param_sweep_scatter.png`, `param_sweep_heatmap.png` |
 | `create_xlsx_files.py` | Converts CSVs to Excel with live formulas; outputs `treasury_rates.xlsx` and `butterfly_trades.xlsx` |
 | `treasury_rates.csv` | Daily CMT yields + butterfly spread + 252d Z-score (Jun 1976 – present) |
 | `butterfly_trades_long.csv` | Long belly trade log with DV01s, notionals, repo rates, and P&L |
+| `param_sweep_results.csv` | Trade count / win rate / P&L for every entry-exit Z-score combo tested |
 | `treasury_rates.xlsx` | Live Excel formulas for butterfly spread and 252d rolling Z-score (cols E–H) |
 | `butterfly_trades.xlsx` | Two-sheet workbook: Long Belly Trades / Summary (all P&L as live formulas) |
 | `butterfly_trades.png` | 3-panel chart: spread + entry band, Z-score, cumulative P&L |
+| `param_sweep_scatter.png` | Trade count vs. total P&L across all tested thresholds, colored by win rate |
+| `param_sweep_heatmap.png` | Entry × exit Z-score grid, colored by total P&L, annotated with trade count |
 
 ---
 
@@ -280,6 +284,37 @@ Two sheets with live formulas (italic blue cells):
 
 ---
 
+## Position Sizing: Conviction-Weighted Notional
+
+Since P&L scales linearly with notional, the 6 trades in the base strategy were re-sized by entry Z-score (`multiplier = entry_z / 2.0`) instead of a flat $100M belly on every trade — bigger size on more extreme, higher-conviction entries.
+
+| Sizing | Trades | Total P&L |
+|---|---|---|
+| Flat $100M notional | 6 | +$1,027,000 |
+| Conviction-weighted notional | 6 | **+$1,340,000 (+30%)** |
+
+This reweights the same 6 trades rather than changing which ones fire: the one loss (Feb 2021, the weakest entry at Z=2.06) is barely upweighted, while the strongest entry (Mar 2020, Z=2.81) gets the largest boost — sizing down the weak signal rather than filtering it out.
+
+---
+
+## Parameter Sensitivity: Entry/Exit Z-Score Sweep
+
+`param_sweep.py` re-runs the backtest across a grid of entry/exit Z-score thresholds (min hold fixed at 30 days) to test whether generating more trades — by loosening the signal — actually raises total P&L.
+
+| Combo | Entry Z | Exit Z | Trades | Win Rate | Total P&L |
+|---|---|---|---|---|---|
+| Current strategy | +2.00 | 0.00 | 6 | 83% | +$1.03M |
+| Best in sweep | +1.75 | −1.00 | 8 | 88% | **+$2.56M** |
+| Most trades tested | +1.00 | +1.50 | 17 | — | +$1.54M |
+
+**What the data shows:** more trades does not mean more profit. Total P&L across the 111 tested combos is a noisy cloud against trade count, not a rising curve — the 17-trade combo underperforms several 8-trade combos. Loosening the *entry* threshold (toward Z = 1.0) does add trades, but win rate and per-trade P&L both erode, since each entry represents a less extreme, lower-conviction dislocation.
+
+The real lever is the **exit** threshold, not trade frequency. The best region in the grid keeps entry close to its current level (Z ≈ 1.5–1.75) but pushes exit deeper negative (Z ≈ −1.0 to −1.25) instead of stopping at the mean (0.0) — i.e., riding through full reversion into the other side of the range captures meaningfully more P&L per trade than adding more, shallower trades.
+
+Outputs: `param_sweep_results.csv` (all combos), `param_sweep_scatter.png` (trade count vs. total P&L, colored by win rate), `param_sweep_heatmap.png` (full entry × exit grid).
+
+---
+
 ## Limitations & Extensions
 
 | Limitation | Potential Improvement |
@@ -334,5 +369,17 @@ python create_xlsx_files.py
 Outputs:
 - `treasury_rates.xlsx` — butterfly spread and 252d rolling Z-score with live Excel formulas
 - `butterfly_trades.xlsx` — two-sheet workbook (Long Belly Trades / Summary) with all P&L as live formulas
+
+### Step 4 — Sweep Entry/Exit Z-Score Thresholds (optional)
+
+```bash
+set FRED_API_KEY=your_key_here
+python param_sweep.py
+```
+
+Outputs:
+- `param_sweep_results.csv` — trade count, win rate, and P&L for every entry/exit Z-score combo tested
+- `param_sweep_scatter.png` — trade count vs. total P&L, colored by win rate
+- `param_sweep_heatmap.png` — entry × exit Z-score grid, colored by total P&L, annotated with trade count
 
 > **Note**: Run steps in order. `butterfly.py` reads `treasury_rates.csv` produced in Step 1. `create_xlsx_files.py` reads all CSVs from Steps 1 and 2.
