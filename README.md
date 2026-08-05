@@ -288,6 +288,16 @@ Two sheets with live formulas (italic blue cells):
 
 Since P&L scales linearly with notional, the 6 trades in the base strategy were re-sized by entry Z-score (`multiplier = entry_z / 2.0`) instead of a flat $100M belly on every trade — bigger size on more extreme, higher-conviction entries.
 
+| Entry | Entry Z | Baseline P&L | Multiplier | Conviction-Weighted P&L |
+|---|---|---|---|---|
+| 2016-11-18 | 2.33 | +$330,443 | 1.17x | +$385,297 |
+| 2019-12-06 | 2.57 | +$247,035 | 1.29x | +$317,811 |
+| 2020-03-06 | 2.81 | +$270,400 | 1.41x | +$380,047 |
+| 2021-02-26 | 2.06 | −$286,633 | 1.03x | −$294,802 |
+| 2024-04-11 | 2.31 | +$332,217 | 1.15x | +$383,212 |
+| 2024-10-09 | 2.53 | +$133,752 | 1.26x | +$168,996 |
+| **Total** | | **+$1,027,214** | | **+$1,340,560** |
+
 | Sizing | Trades | Total P&L |
 |---|---|---|
 | Flat $100M notional | 6 | +$1,027,000 |
