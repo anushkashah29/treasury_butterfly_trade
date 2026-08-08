@@ -325,6 +325,39 @@ Outputs: `param_sweep_results.csv` (all combos), `param_sweep_scatter.png` (trad
 
 ---
 
+## Risk-Adjusted Performance: Sharpe Ratio & Profit Factor
+
+Since P&L in dollars depends on notional and isn't comparable across sizing choices, the 8-trade combo (Z ≥ 1.75 entry, Z ≤ −1.00 exit) was also evaluated on risk-adjusted terms.
+
+| Entry | Exit | Hold | Entry Z | P&L |
+|---|---|---|---|---|
+| 2016-11-18 | 2017-08-29 | 194d | 2.33 | +$629,986 |
+| 2018-04-23 | 2018-08-06 | 73d | 1.80 | +$345,260 |
+| 2019-11-07 | 2020-03-20 | 90d | 1.77 | +$300,601 |
+| 2020-03-25 | 2020-06-09 | 52d | 1.77 | +$310,147 |
+| 2021-02-25 | 2022-07-01 | 339d | 1.94 | −$362,985 |
+| 2023-10-24 | 2023-12-07 | 31d | 1.77 | +$645,897 |
+| 2024-04-10 | 2024-08-01 | 78d | 1.89 | +$381,937 |
+| 2024-09-25 | 2025-06-26 | 186d | 1.83 | +$307,759 |
+
+**Sharpe ratio** (per-trade, unannualized — scale-invariant, so no capital base is required):
+```
+Sharpe = mean(trade P&L) / std(trade P&L, ddof=1)
+       = $319,825 / $310,269
+       = 1.03
+```
+
+**Profit factor** (gross wins ÷ gross losses):
+```
+Gross wins   = $629,986 + $345,260 + $300,601 + $310,147 + $645,897 + $381,937 + $307,759 = $2,921,587
+Gross losses = $362,985
+Profit factor = $2,921,587 / $362,985 = 8.05x
+```
+
+**Caveat:** n = 8 trades is a small sample — the standard error on this Sharpe estimate is roughly `sqrt((1 + Sharpe²/2) / n) ≈ 0.43`, so the true Sharpe plausibly ranges from ~0.2 to ~1.8. These thresholds (Z ≥ 1.75 / Z ≤ −1.00) were also selected by grid-searching the same historical data being reported on, so this is an in-sample result, not an out-of-sample validation.
+
+---
+
 ## Limitations & Extensions
 
 | Limitation | Potential Improvement |
